@@ -1,14 +1,35 @@
 require('dotenv').config();
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
-
+const mongoose = require('mongoose');
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use('/public', express.static(`${process.cwd()}/public`));
+
+console.log(process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => console.log('Connected to the database'))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+
+// Define the URL schema
+const urlSchema = new mongoose.Schema({
+  original: String
+});
+
+// Create a model from the schema
+const URL = mongoose.model('URL', urlSchema);
 
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
@@ -17,6 +38,24 @@ app.get('/', function(req, res) {
 // Your first API endpoint
 app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
+});
+
+app.post('/api/shorturl', async (req, res) => {
+  const url = req.body.url;
+
+  try {
+    const newUrl = new URL({
+      original: url
+    });
+    await newUrl.save();
+    res.json({
+      original_url: newUrl.original,
+      message: 'URL saved successfully'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.listen(port, function() {
