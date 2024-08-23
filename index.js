@@ -39,8 +39,15 @@ app.get('/', function(req, res) {
 });
 
 // Your first API endpoint
-app.get('/api/hello', function(req, res) {
-  res.json({ greeting: 'hello API' });
+app.get('/api/shorturl/:shortUrl', async (req, res) => {
+  const urlID = req.params.shortUrl;
+  try {
+    const doc = await URL.findOne({ id: urlID });
+    console.log(doc)
+    res.redirect(doc.original);
+  } catch (error) {
+    res.json({ error: "url not found" })
+  }
 });
 
 app.post('/api/shorturl', async (req, res) => {
