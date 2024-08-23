@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -28,6 +29,9 @@ const urlSchema = new mongoose.Schema({
   original: String
 });
 
+// Assign a unique id for each url
+urlSchema.plugin(AutoIncrement, { inc_field: 'id' });
+
 // Create a model from the schema
 const URL = mongoose.model('URL', urlSchema);
 
@@ -50,7 +54,7 @@ app.post('/api/shorturl', async (req, res) => {
     await newUrl.save();
     res.json({
       original_url: newUrl.original,
-      message: 'URL saved successfully'
+      short_url: newUrl.id
     });
   } catch (error) {
     console.error(error);
@@ -58,6 +62,6 @@ app.post('/api/shorturl', async (req, res) => {
   }
 });
 
-app.listen(port, function() {
+app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });
